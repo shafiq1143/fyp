@@ -79,37 +79,37 @@ export default function Home() {
         </div>
         <div className="gallery-grid">
           <div className="gallery-item gallery-item-large">
-            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}></div>
+            <img src="https://images.unsplash.com/photo-1541339907198-943c36d7b9d8?w=600&h=400&fit=crop" alt="Campus Entrance" className="gallery-image" />
             <div className="gallery-overlay">
               <span>Campus Entrance</span>
             </div>
           </div>
           <div className="gallery-item">
-            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'}}></div>
+            <img src="https://images.unsplash.com/photo-1507842217343-583f7270bfda?w=400&h=350&fit=crop" alt="Library Block" className="gallery-image" />
             <div className="gallery-overlay">
               <span>Library Block</span>
             </div>
           </div>
           <div className="gallery-item">
-            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'}}></div>
+            <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=350&fit=crop" alt="Sports Ground" className="gallery-image" />
             <div className="gallery-overlay">
               <span>Sports Ground</span>
             </div>
           </div>
           <div className="gallery-item">
-            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'}}></div>
+            <img src="https://images.unsplash.com/photo-1453395511107-e91b9daa6fe0?w=400&h=350&fit=crop" alt="Classroom" className="gallery-image" />
             <div className="gallery-overlay">
               <span>Classroom</span>
             </div>
           </div>
           <div className="gallery-item">
-            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'}}></div>
+            <img src="https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=400&h=350&fit=crop" alt="Lab Facilities" className="gallery-image" />
             <div className="gallery-overlay">
               <span>Lab Facilities</span>
             </div>
           </div>
           <div className="gallery-item gallery-item-large">
-            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'}}></div>
+            <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&h=400&fit=crop" alt="Auditorium" className="gallery-image" />
             <div className="gallery-overlay">
               <span>Auditorium</span>
             </div>
