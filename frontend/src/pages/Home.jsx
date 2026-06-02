@@ -71,6 +71,52 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Gallery */}
+      <section className="gallery-section">
+        <div className="section-header">
+          <h2>Our Campus</h2>
+          <p>Explore the vibrant learning environment that inspires excellence and innovation.</p>
+        </div>
+        <div className="gallery-grid">
+          <div className="gallery-item gallery-item-large">
+            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}></div>
+            <div className="gallery-overlay">
+              <span>Campus Entrance</span>
+            </div>
+          </div>
+          <div className="gallery-item">
+            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'}}></div>
+            <div className="gallery-overlay">
+              <span>Library Block</span>
+            </div>
+          </div>
+          <div className="gallery-item">
+            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'}}></div>
+            <div className="gallery-overlay">
+              <span>Sports Ground</span>
+            </div>
+          </div>
+          <div className="gallery-item">
+            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'}}></div>
+            <div className="gallery-overlay">
+              <span>Classroom</span>
+            </div>
+          </div>
+          <div className="gallery-item">
+            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'}}></div>
+            <div className="gallery-overlay">
+              <span>Lab Facilities</span>
+            </div>
+          </div>
+          <div className="gallery-item gallery-item-large">
+            <div className="gallery-placeholder" style={{background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'}}></div>
+            <div className="gallery-overlay">
+              <span>Auditorium</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="cta-section">
         <h2>Ready to Transform Your Institution?</h2>
