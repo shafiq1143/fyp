@@ -24,6 +24,10 @@ export default function Home() {
 
       {/* Hero */}
       <section className="hero">
+        <div className="hero-background">
+          <img src="https://images.unsplash.com/photo-1564307592333-c60657eea523?w=1200&h=600&fit=crop" alt="College Building" className="hero-bg-image" />
+          <div className="hero-overlay"></div>
+        </div>
         <div className="hero-content">
           <div className="hero-badge">🎓 Modern College Management</div>
           <h1>Manage Your <span>Institution</span> Effortlessly</h1>
