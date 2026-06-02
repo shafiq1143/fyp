@@ -22,7 +22,7 @@ return [
         'host' => 'smtp.gmail.com',
         'port' => 587,
         'user' => 'saqlain.kic@gmail.com', // Update with your Gmail
-        'pass' => 'bgnwhxpbpuqdmlrs',   // Update with your Gmail App Password
+        'pass' => 'ajgsazeiqyzuoqsh',   // Update with your Gmail App Password
         'from_name' => 'College Management System',
     ],
 ];

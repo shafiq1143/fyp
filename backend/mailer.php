@@ -6,13 +6,22 @@ declare(strict_types=1);
  * Standalone SMTP client for sending system notifications via Gmail.
  */
 
-function send_system_email(string $to, string $subject, string $body): bool
+function mailer_log(string $message): void
+{
+    $logFile = __DIR__ . '/mailer_debug.log';
+    $timestamp = date('Y-m-d H:i:s');
+    file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND | LOCK_EX);
+}
+
+function send_system_email(string $to, string $subject, string $body, ?string $fromAddress = null, ?string $fromNameOverride = null): bool
 {
     global $config;
     $smtp = $config['smtp'] ?? null;
 
     if (!$smtp || $smtp['user'] === 'your-email@gmail.com') {
-        error_log("Mailer Error: SMTP credentials not configured in config.php");
+        $message = "Mailer Error: SMTP credentials not configured in config.php";
+        error_log($message);
+        mailer_log($message);
         return false;
     }
 
@@ -21,10 +30,12 @@ function send_system_email(string $to, string $subject, string $body): bool
         $port = $smtp['port'];
         $user = $smtp['user'];
         $pass = $smtp['pass'];
-        $fromName = $smtp['from_name'];
+        $fromName = $fromNameOverride ?: ($smtp['from_name'] ?? 'College Management System');
+        $fromAddress = $fromAddress ?: ($smtp['from_email'] ?? $user);
 
         // Simple SMTP implementation using PHP sockets
-        $header = "From: \"$fromName\" <$user>\r\n";
+        $header = "From: \"$fromName\" <$fromAddress>\r\n";
+        $header .= "Reply-To: \"$fromName\" <$fromAddress>\r\n";
         $header .= "To: $to\r\n";
         $header .= "Subject: $subject\r\n";
         $header .= "MIME-Version: 1.0\r\n";
@@ -102,7 +113,9 @@ function send_system_email(string $to, string $subject, string $body): bool
         return true;
 
     } catch (Exception $e) {
-        error_log("Mailer Error: " . $e->getMessage());
+        $message = "Mailer Error: " . $e->getMessage();
+        error_log($message);
+        mailer_log($message);
         return false;
     }
 }

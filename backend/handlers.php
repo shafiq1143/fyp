@@ -109,6 +109,18 @@ function handle_admin_users(PDO $pdo, string $method): void
             $st->execute([$email, $hash, $role, $full_name, $phone, $student_code, $employee_code]);
             $id = (int) $pdo->lastInsertId();
             log_activity($pdo, (int) $me['id'], 'user_create', "id=$id role=$role");
+
+            if ($role === 'student' && $email !== '') {
+                $subject = 'Welcome to College Management System';
+                $body = "<h2>Welcome, $full_name!</h2>"
+                      . "<p>Your student account has been created successfully.</p>"
+                      . "<p><b>Email:</b> $email</p>"
+                      . "<p><b>Password:</b> " . htmlspecialchars($password, ENT_QUOTES | ENT_SUBSTITUTE) . "</p>"
+                      . "<p>Please log in and update your password immediately.</p>"
+                      . "<hr/><p>This message was sent by your administrator.</p>";
+                send_system_email($email, $subject, $body);
+            }
+
             json_out(['ok' => true, 'id' => $id]);
         } catch (PDOException $e) {
             if (str_contains($e->getMessage(), 'Duplicate')) {
@@ -725,6 +737,32 @@ function handle_grade_submission(PDO $pdo): void
         $in['feedback'] ?? null,
         $sid,
     ]);
+
+    $studentInfo = $pdo->prepare(
+        'SELECT s.student_id, u.full_name, u.email, a.title, c.code, c.title AS course_title
+         FROM assignment_submissions s
+         JOIN users u ON u.id = s.student_id
+         JOIN assignments a ON a.id = s.assignment_id
+         JOIN course_offerings co ON co.id = a.course_offering_id
+         JOIN courses c ON c.id = co.course_id
+         WHERE s.id = ?'
+    );
+    $studentInfo->execute([$sid]);
+    $info = $studentInfo->fetch();
+    if ($info && $info['email']) {
+        $courseName = $info['code'] . ' - ' . $info['course_title'];
+        $marks = $in['marks_obtained'] !== null ? (float) $in['marks_obtained'] : 'N/A';
+        $feedback = trim((string) ($in['feedback'] ?? ''));
+        $subject = "Assignment Graded: {$info['title']}";
+        $body = "<h2>Assignment Graded</h2>"
+              . "<p>Dear <b>{$info['full_name']}</b>,</p>"
+              . "<p>Your assignment <b>{$info['title']}</b> for <b>$courseName</b> has been graded.</p>"
+              . "<p><b>Marks:</b> $marks</p>"
+              . ($feedback !== '' ? "<p><b>Feedback:</b><br/>" . nl2br(htmlspecialchars($feedback, ENT_QUOTES | ENT_SUBSTITUTE)) . "</p>" : '')
+              . "<hr/><p>This message was sent by your administrator.</p>";
+        send_system_email($info['email'], $subject, $body);
+    }
+
     json_out(['ok' => true]);
 }
 
@@ -787,6 +825,7 @@ function handle_attendance(PDO $pdo, string $method): void
              VALUES (?,?,?,?,?)
              ON DUPLICATE KEY UPDATE status = VALUES(status), marked_by = VALUES(marked_by)'
         );
+        $studentStmt = $pdo->prepare('SELECT full_name, email FROM users WHERE id = ?');
         foreach ($records as $rec) {
             $sid = (int) ($rec['student_id'] ?? 0);
             $status = (string) ($rec['status'] ?? 'present');
@@ -799,6 +838,21 @@ function handle_attendance(PDO $pdo, string $method): void
                 continue;
             }
             $ins->execute([$oid, $sid, $class_date, $status, (int) $me['id']]);
+
+            $studentStmt->execute([$sid]);
+            $student = $studentStmt->fetch();
+            if ($student && $student['email']) {
+                $courseInfo = $pdo->prepare('SELECT c.code, c.title FROM course_offerings co JOIN courses c ON c.id = co.course_id WHERE co.id = ?');
+                $courseInfo->execute([$oid]);
+                $c = $courseInfo->fetch();
+                $courseName = $c ? ($c['code'] . ' - ' . $c['title']) : "Course #$oid";
+                $subject = "Attendance Marked: $courseName";
+                $body = "<h2>Attendance Update</h2>"
+                      . "<p>Dear <b>{$student['full_name']}</b>,</p>"
+                      . "<p>Your attendance for <b>$courseName</b> on <b>$class_date</b> has been marked as <b>$status</b>.</p>"
+                      . "<hr/><p>This message was sent by your administrator.</p>";
+                send_system_email($student['email'], $subject, $body);
+            }
         }
         log_activity($pdo, (int) $me['id'], 'attendance_save', "offering=$oid date=$class_date");
 
@@ -879,6 +933,25 @@ function handle_marks(PDO $pdo, string $method): void
             (float) ($in['max_marks'] ?? 100),
             (int) $me['id'],
         ]);
+
+        $studentStmt = $pdo->prepare('SELECT full_name, email FROM users WHERE id = ?');
+        $studentStmt->execute([$student_id]);
+        $student = $studentStmt->fetch();
+        if ($student && $student['email']) {
+            $courseInfo = $pdo->prepare('SELECT c.code, c.title FROM course_offerings co JOIN courses c ON c.id = co.course_id WHERE co.id = ?');
+            $courseInfo->execute([$oid]);
+            $c = $courseInfo->fetch();
+            $courseName = $c ? ($c['code'] . ' - ' . $c['title']) : "Course #$oid";
+            $title = trim((string) ($in['title'] ?? 'Assessment'));
+            $subject = "New Marks Uploaded: $courseName";
+            $body = "<h2>Marks Uploaded</h2>"
+                  . "<p>Dear <b>{$student['full_name']}</b>,</p>"
+                  . "<p>Your <b>$title</b> marks have been uploaded for <b>$courseName</b>.</p>"
+                  . "<p><b>Score:</b> " . (float) ($in['marks_obtained'] ?? 0) . " / " . (float) ($in['max_marks'] ?? 100) . "</p>"
+                  . "<hr/><p>This message was sent by your administrator.</p>";
+            send_system_email($student['email'], $subject, $body);
+        }
+
         json_out(['ok' => true, 'id' => (int) $pdo->lastInsertId()]);
     }
     json_out(['ok' => false, 'error' => 'Method not allowed'], 405);
@@ -1010,6 +1083,34 @@ function handle_final_results(PDO $pdo, string $method): void
                       . "<hr/><p>College Management System Notification</p>";
 
                 send_system_email($admin['email'], $subject, $body);
+            }
+
+            // Notify each student whose results are now pending approval.
+            $studentResults = $pdo->prepare(
+                "SELECT u.email, u.full_name, c.code, c.title, fr.grade, fr.total_marks
+                 FROM final_results fr
+                 JOIN users u ON u.id = fr.student_id
+                 JOIN course_offerings co ON co.id = fr.course_offering_id
+                 JOIN courses c ON c.id = co.course_id
+                 WHERE fr.course_offering_id = ? AND fr.status = 'pending_approval'"
+            );
+            $studentResults->execute([$oid]);
+            while ($student = $studentResults->fetch()) {
+                if (!$student['email']) {
+                    continue;
+                }
+
+                $courseName = $student['code'] . ' - ' . $student['title'];
+                $subject = "Your Result for $courseName is Pending Approval";
+                $body = "<h2>Final Result Submitted</h2>"
+                      . "<p>Dear <b>{$student['full_name']}</b>,</p>"
+                      . "<p>Your final result for <b>$courseName</b> has been submitted by your teacher and is pending admin approval.</p>"
+                      . "<p><b>Grade:</b> {$student['grade']}</p>"
+                      . "<p><b>Total Marks:</b> {$student['total_marks']}</p>"
+                      . "<p>Once the admin approves the result, you will receive a follow-up email with the final decision.</p>"
+                      . "<hr/><p>College Management System Notification</p>";
+
+                send_system_email($student['email'], $subject, $body);
             }
 
             json_out(['ok' => true]);
@@ -1164,3 +1265,5 @@ function handle_admin_enrollments(PDO $pdo, string $method): void
     }
     json_out(['ok' => false, 'error' => 'Method not allowed'], 405);
 }
+
+
